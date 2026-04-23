@@ -1,0 +1,90 @@
+@page "/edit-sensor"
+@page "/edit-sensor/{Id:int}"
+@rendermode InteractiveServer
+@using DashboardData.Models
+@using DashboardData.Services
+@inject ISensorService SensorService
+@inject NavigationManager NavigationManager
+
+<h3>@(Id.HasValue ? "Modifier le Capteur" : "Ajouter un Nouveau Capteur")</h3>
+
+@if (currentSensor == null)
+{
+    <p><em>Chargement du formulaire...</em></p>
+}
+else
+{
+    <EditForm Model="currentSensor" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" />
+
+        <div class="mb-3">
+            <label class="form-label">Nom du capteur :</label>
+            <InputText @bind-Value="currentSensor.Name" class="form-control" />
+            <ValidationMessage For="@(() => currentSensor.Name)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Localisation :</label>
+            <InputSelect @bind-Value="currentSensor.LocationId" class="form-select">
+                <option value="0">-- Sélectionnez un lieu --</option>
+                @foreach (var loc in Locations)
+                {
+                    <option value="@loc.Id">@loc.Name (@loc.Building)</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => currentSensor.LocationId)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Valeur encours :</label>
+            <InputNumber @bind-Value="currentSensor.Value" class="form-control" />
+            <ValidationMessage For="@(() => currentSensor.Value)" class="text-danger" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" @onclick="Cancel" class="btn btn-primary">Annuler</button>
+     
+    </EditForm>
+}
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private SensorData? currentSensor;
+    private List<Location> Locations = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Locations = await SensorService.GetLocationsAsync();
+
+        if (Id.HasValue)
+        {
+            currentSensor = await SensorService.GetSensorByIdAsync(Id.Value);
+        }
+        
+        if (currentSensor == null)
+        {
+            currentSensor = new SensorData();
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (Id.HasValue)
+        {
+            await SensorService.UpdateSensorAsync(currentSensor);
+        }
+        else
+        {
+            await SensorService.AddSensorAsync(currentSensor);
+        }
+        
+        NavigationManager.NavigateTo("/dashboard");
+    }
+    private async Task Cancel(){
+        await SensorService.ReloadSensorAsync(currentSensor);
+        Console.WriteLine("test");
+        NavigationManager.NavigateTo("/dashboard");
+    }
+}

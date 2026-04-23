@@ -1,0 +1,55 @@
+@using DashboardData.Models
+
+<table class="table table-striped table-hover mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Nom</th>
+            <th>Lieu</th>
+            <th>Valeur</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Sensors == null || !Sensors.Any())
+        {
+            <tr><td colspan="4" class="text-center">Aucune donnée disponible.</td></tr>
+        }
+        else
+        {
+            @foreach (var sensor in Sensors)
+            {
+                <tr>
+                    <td>@sensor.Name</td>
+                    <td>@(sensor.Location != null ? sensor.Location.Name : "N/A")</td>
+                    <td>@sensor.Value</td>
+                    <td>
+                        <a href="/edit-sensor/@sensor.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Éditer
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => TriggerDelete(sensor.Id)">
+                             <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public List<SensorData> Sensors { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<int> OnDelete { get; set; }
+     // EventCallback permet de remonter une information (ici un int, l'Id) vers le parent
+    [Parameter]
+    public EventCallback<int> OnDeleteClicked { get; set; }
+
+    // Méthode appelée par le clic du bouton
+    private async Task TriggerDelete(int id)
+    {
+        // On notifie le Parent et on lui passe l'ID du capteur à supprimer
+        await OnDeleteClicked.InvokeAsync(id);
+    }
+}

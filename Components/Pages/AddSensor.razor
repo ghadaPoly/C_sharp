@@ -1,0 +1,45 @@
+@page "/add-sensor"
+@inject NavigationManager NavManager
+@inject ISensorService SensorService
+@using DashboardData.Models
+@using DashboardData.Services
+@rendermode InteractiveServer
+
+<h3>Ajouter un capteur</h3>
+
+<EditForm Model="@sensor" OnValidSubmit="AddSensor1">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Nom du capteur</label>
+        <InputText class="form-control" @bind-Value="sensor.Name" />
+        <ValidationMessage For="@(() => sensor.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label>Valeur</label>
+        <InputNumber class="form-control" @bind-Value="sensor.Value" />
+        <ValidationMessage For="@(() => sensor.Value)" />
+    </div>
+
+    <button type="submit" class="btn btn-success">Ajouter</button>
+    <button type="button" class="btn btn-secondary" @onclick="NavigateBack">Annuler</button>
+
+</EditForm>
+
+@code {
+    private SensorData sensor = new SensorData();
+
+    private async Task AddSensor1()
+    {
+        await SensorService.AddSensorAsync(sensor);
+        NavManager.NavigateTo("/dashboard");
+    }
+
+    private void NavigateBack()
+    {
+        NavManager.NavigateTo("/dashboard");
+    }
+}

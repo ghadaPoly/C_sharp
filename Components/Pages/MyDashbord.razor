@@ -1,0 +1,308 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+
+@using DashboardData.Models
+@using DashboardData.Services
+@using DashboardData.Components.UI
+@using Radzen
+
+@inject ISensorService SensorService
+@inject NavigationManager NavManager
+@inject UserCounterService Counter
+
+<h1>Tableau de bord</h1>
+
+<div class="alert alert-info">
+    Bienvenue sur l'interface de pilotage <br>
+    Nous sommes le : <strong>@DateTime.Now.ToString("dd MMMM yyyy")</strong>
+</div>
+
+<button class="btn btn-outline-secondary mb-3" @onclick="() => ShowAsCards = !ShowAsCards">
+    Changer de Vue
+</button>
+
+<p>
+    Status du système :
+    @if (IsSystemOK)
+    {
+        <span class="badge bg-success">Opérationnel</span>
+    }
+    else
+    {
+        <span class="badge bg-danger">Erreur critique</span>
+    }
+</p>
+
+<button class="btn btn-primary mb-3" @onclick="RefreshSystem">
+    Actualiser le statut
+</button>
+
+<div class="mt-3 card card-body">
+    Logs : @LastLog
+</div>
+
+<hr>
+
+<h3>Statistiques des capteurs</h3>
+
+<ul>
+    <li><strong>Total capteurs :</strong> @TotalSensors</li>
+    <li><strong>Moyenne des valeurs :</strong> @AverageValue</li>
+    <li><strong>Valeur maximale :</strong> @MaxValue</li>
+</ul>
+
+<hr>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <KpiCard Title="Total Sondes" Value="@TotalSondes.ToString()"
+                 BackgroundColorClass="bg-primary" IconClass="bi-box-seam" />
+    </div>
+    <div class="col-md-4 mb-3">
+        <KpiCard Title="Moyenne Globale" Value="@($"{Moyenne:F1} °C")"
+                 BackgroundColorClass="bg-success" IconClass="bi-bullseye" />
+    </div>
+    <div class="col-md-4 mb-3">
+        <KpiCard Title="Alerte Max" Value="@($"{Max:F1} °C")"
+                 BackgroundColorClass="bg-danger" IconClass="bi-exclamation-triangle-fill" />
+    </div>
+</div>
+
+<hr>
+
+<h3>Gestion des capteurs</h3>
+
+<button class="btn btn-secondary mb-3" @onclick="LoadAll">Toutes les sondes</button>
+
+<button class="btn btn-danger mb-3 ms-2" @onclick="LoadCritical">
+    Alertes (>30)
+</button>
+
+<button class="btn btn-primary mb-3 ms-2" @onclick="GoAddSensor">
+    Ajouter un capteur
+</button>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Températures Moyennes</h5>
+            </div>
+            <div class="card-body">
+                <RadzenChart SeriesClick="@OnChartClick">
+                    <RadzenColumnSeries Data="@LocationStats"
+                                        CategoryProperty="LocationName"
+                                        ValueProperty="AverageValue"
+                                        Title="Moyenne" />
+                    <RadzenValueAxis Formatter="FormatTemperature" />
+                    <RadzenLegend Visible="false" />
+                </RadzenChart>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-speedometer2 text-danger"></i> Valeur Max Détectée</h5>
+            </div>
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <RadzenRadialGauge Style="width: 100%; height: 250px;">
+                    <RadzenRadialGaugeScale StartAngle="0" EndAngle="360" Step="20">
+                        <RadzenRadialGaugeScalePointer Value="@Max" Length="0.6" ShowValue="true" />
+                        <!-- Zone verte -->
+                        <RadzenRadialGaugeScaleRange From="0" To="40" Fill="green" />
+                        <!-- Zone orange -->
+                        <RadzenRadialGaugeScaleRange From="40" To="70" Fill="orange" />
+                        <!-- Zone rouge -->
+                        <RadzenRadialGaugeScaleRange From="70" To="100" Fill="red" />
+                    </RadzenRadialGaugeScale>
+                </RadzenRadialGauge>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <p><em>Chargement des données...</em></p>
+}
+else if (ShowAsCards)
+{
+    <div class="row">
+        @foreach (var sensor in Sensors)
+        {
+            <div class="col-md-3">
+                <SensorCard Sensor="sensor" />
+            </div>
+        }
+    </div>
+}
+else
+{
+    <SensorTable Sensors="FilteredSensors" OnDeleteClicked="DeleteSensor" />
+}
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text"
+                   @bind="SearchText"
+                   @bind:event="oninput"
+                   class="form-control"
+                   placeholder="Rechercher par nom de capteur..." />
+            
+            
+        </div>
+    </div>
+    
+</div>
+
+<a href="/edit-sensor" class="btn btn-success mb-3">+ Nouveau Capteur</a>
+
+<hr>
+
+<h3>User Counter</h3>
+
+<p>Value: @Counter.Count</p>
+
+<button class="btn btn-primary" @onclick="Increment">
+    Increment
+</button>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Répartition des capteurs par lieu</h5>
+            </div>
+            <div class="card-body">
+                <RadzenChart>
+                    <RadzenDonutSeries Data="@CountStats"
+                                       CategoryProperty="LocationName"
+                                       ValueProperty="Count">
+                        <TitleTemplate>
+                            <div class="rz-donut-content text-center">
+                                <div>Total</div>
+                                <div style="font-size:20px; font-weight:bold;">
+                                    @TotalSondes
+                                </div>
+                            </div>
+                        </TitleTemplate>
+                    </RadzenDonutSeries>
+                </RadzenChart>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private bool IsSystemOK = false;
+    private int RequestCount = 0;
+    private string LastLog = "Rien à signaler";
+    private bool ShowAsCards = false;
+    private List<SensorData> Sensors = new();
+    private bool _isLoading = true;
+
+    private int TotalSensors;
+    private double AverageValue;
+    private double MaxValue;
+
+    private int TotalSondes;
+    private double Moyenne;
+    private double Max;
+    private List<LocationCountStat> CountStats = new();
+    private List<LocationStat> LocationStats = new();
+
+    private List<SensorData> FilteredSensors = new();
+    private string _searchText = "";
+    private string? SelectedLocationFilter = null;
+
+    private string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            _ = ExecuteSearch();  
+        }
+    }
+
+    private async Task ExecuteSearch()
+    {
+        FilteredSensors = await SensorService.SearchSensorsAsync(SelectedLocationFilter, SearchText);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+         await ExecuteSearch();
+        await LoadAll();
+
+        CountStats = await SensorService.GetSensorCountByLocationAsync();
+        LocationStats = await SensorService.GetAverageValueByLocationAsync();
+
+        TotalSensors = await SensorService.GetTotalCountAsync();
+        AverageValue = await SensorService.GetAverageValueAsync();
+        MaxValue = await SensorService.GetMaxValueAsync();
+
+        TotalSondes = TotalSensors;
+        Moyenne = AverageValue;
+        Max = MaxValue;
+    }
+
+    private string FormatTemperature(object value)
+    {
+        return $"{Math.Round((double)value, 1)} °C";
+    }
+
+    private void RefreshSystem()
+    {
+        RequestCount++;
+        var rnd = new Random();
+        IsSystemOK = rnd.Next(0, 10) > 2;
+
+        if (IsSystemOK)
+            LastLog = $"Check {RequestCount}: tout va bien";
+        else
+            LastLog = $"Check {RequestCount}: anomalie détectée";
+    }
+
+    private async Task LoadAll()
+    {
+        _isLoading = true;
+        Sensors = await SensorService.GetSensorsAsync();
+        _isLoading = false;
+    }
+
+    private async Task DeleteSensor(int id)
+    {
+        await SensorService.DeleteSensorAsync(id);
+        await LoadAll();
+        await ExecuteSearch(); 
+    }
+
+    private async Task LoadCritical()
+    {
+        _isLoading = true;
+        Sensors = await SensorService.GetCriticalSensorsAsync(30.0);
+        _isLoading = false;
+    }
+
+    private void GoAddSensor()
+    {
+        NavManager.NavigateTo("/add-sensor");
+    }
+
+    private void Increment()
+    {
+        Counter.Increment();
+    }
+
+    private async Task OnChartClick(SeriesClickEventArgs args)
+    {
+        string clickedLocation = args.Category.ToString();
+        SelectedLocationFilter = SelectedLocationFilter == clickedLocation ? null : clickedLocation;
+        await ExecuteSearch();
+    }
+}

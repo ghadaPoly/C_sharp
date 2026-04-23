@@ -1,0 +1,32 @@
+@page "/logs"
+@rendermode InteractiveServer
+<></> { }
+
+@code {
+    
+        private List<string> SystemLogs = new()
+        {
+            "10:00 Démarrage du système",
+            "10:05 - Erreur : Connexion base de données échouée", 
+            "10:06 - Reconnexion réussie",
+            "10:15-Erreur : Timeout API externe",
+            "10:20 - Sauvegarde automatique effectuée"
+        };
+        private int c;
+}
+ <ul>
+    
+    @foreach(var log in SystemLogs)
+    {
+        if (log.Contains("Erreur"))
+        {
+            c++;
+            <li class="text-danger">@log</li>
+        }
+        else
+        {
+            <li class="text-success">@log</li>
+        }
+    }
+    </ul>
+    <p>Total of errors : @c</p>

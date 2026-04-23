@@ -1,0 +1,42 @@
+@page "/converter"
+@rendermode InteractiveServer
+<></> { }
+<h1>page de converter</h1>
+<div class="mb-3">
+    <label>Temp en fh</label>
+    <input type="number" class="form-control" @bind="TemperatureF"/>
+</div>
+
+<div class="alert alert-success" >
+    Resultat en celsius : <strong>@r</strong>
+</div>
+<button class="btn btn-primary" @onclick="enCs">
+    <span class="oi oi-reload"></span> send
+</button>
+
+<div class="mb-3">
+    <label>Temp en cs</label>
+    <input type="number" class="form-control" @bind="cs"/>
+</div>
+
+<div class="alert alert-success" >
+    Resultat en celsius : <strong>@r2</strong>
+</div>
+<button class="btn btn-primary" @onclick="enFh">
+    <span class="oi oi-reload"></span> send
+</button>
+
+@code{ 
+    private  double TemperatureF;
+    private  double cs;
+    private double r2;
+    private double r;
+        private void enCs(){
+            r= Math.Round((TemperatureF-32)*5/9,2);
+
+     }
+        private void enFh(){
+            r2 = Math.Round((cs * 9/5) + 32, 2);
+
+     }
+}
