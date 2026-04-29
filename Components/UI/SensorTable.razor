@@ -5,7 +5,12 @@
         <tr>
             <th>Nom</th>
             <th>Lieu</th>
-            <th>Valeur</th>
+            <th>
+    <button class="btn btn-link p-0 fw-bold text-decoration-none text-white"
+            @onclick="OnSortRequested">
+        Valeur ⬆⬇
+    </button>
+</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -39,6 +44,8 @@
 @code {
     [Parameter]
     public List<SensorData> Sensors { get; set; } = new();
+    [Parameter]
+public EventCallback OnSortRequested { get; set; }
 
     [Parameter]
     public EventCallback<int> OnDelete { get; set; }

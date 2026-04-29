@@ -233,3 +233,4 @@ C:\Users\GHADA\DashboardData\obj\Debug\net10.0\compressed\r9w1mufl9l-{0}-4vyp0a2
 C:\Users\GHADA\DashboardData\obj\Debug\net10.0\compressed\i1901ftr2x-{0}-cjvtifvnlk-cjvtifvnlk.gz
 C:\Users\GHADA\DashboardData\obj\Debug\net10.0\compressed\6xb9o06z95-{0}-6k9qx653br-6k9qx653br.gz
 C:\Users\GHADA\DashboardData\obj\Debug\net10.0\compressed\t2tvocn0z4-{0}-9meuuabozh-9meuuabozh.gz
+C:\Users\GHADA\DashboardData\obj\Debug\net10.0\DashboardData.sourcelink.json

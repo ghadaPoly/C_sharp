@@ -122,26 +122,6 @@
     </div>
 </div>
 
-@if (_isLoading)
-{
-    <p><em>Chargement des données...</em></p>
-}
-else if (ShowAsCards)
-{
-    <div class="row">
-        @foreach (var sensor in Sensors)
-        {
-            <div class="col-md-3">
-                <SensorCard Sensor="sensor" />
-            </div>
-        }
-    </div>
-}
-else
-{
-    <SensorTable Sensors="FilteredSensors" OnDeleteClicked="DeleteSensor" />
-}
-
 <div class="row mb-3">
     <div class="col-md-6">
         <div class="input-group">
@@ -151,12 +131,42 @@ else
                    @bind:event="oninput"
                    class="form-control"
                    placeholder="Rechercher par nom de capteur..." />
-            
-            
         </div>
     </div>
-    
+
+<div class="col-md-6">
+    <div class="form-check mt-2">
+<input type="checkbox"
+       id="criticalOnly"
+       class="form-check-input"
+       checked="@ShowCriticalOnly"
+       @onchange="OnCriticalOnlyChanged" />
+        <label class="form-check-label" for="criticalOnly">
+            Afficher alertes (&gt; 30.0)
+        </label>
+    </div>
 </div>
+</div>
+@if (_isLoading)
+{
+    <p><em>Chargement des données...</em></p>
+}
+else if (ShowAsCards)
+{
+    <div class="row">
+        @foreach (var sensor in FilteredSensors)  
+        {
+            <div class="col-md-3">
+                <SensorCard Sensor="sensor" />
+            </div>
+        }
+    </div>
+}
+else
+{
+    <SensorTable Sensors="FilteredSensors" OnDeleteClicked="DeleteSensor" OnSortRequested="OnSortRequested" />
+}
+
 
 <a href="/edit-sensor" class="btn btn-success mb-3">+ Nouveau Capteur</a>
 
@@ -207,6 +217,7 @@ else
 
     private int TotalSensors;
     private double AverageValue;
+    private bool ShowCriticalOnly { get; set; } = false;
     private double MaxValue;
 
     private int TotalSondes;
@@ -220,24 +231,30 @@ else
     private string? SelectedLocationFilter = null;
 
     private string SearchText
+{
+    get => _searchText;
+    set
     {
-        get => _searchText;
-        set
-        {
-            _searchText = value;
-            _ = ExecuteSearch();  
-        }
+        _searchText = value;
+        _ = ExecuteSearch();  
     }
+}
 
-    private async Task ExecuteSearch()
-    {
-        FilteredSensors = await SensorService.SearchSensorsAsync(SelectedLocationFilter, SearchText);
-    }
+private async Task ExecuteSearch()
+{
+    Console.WriteLine($"==> ExecuteSearch called: location={SelectedLocationFilter}, search={SearchText}, critical={ShowCriticalOnly}");
+    FilteredSensors = await SensorService.SearchSensorsAsync(
+        SelectedLocationFilter,
+        SearchText,
+        ShowCriticalOnly);
+    Console.WriteLine($"==> Résultat: {FilteredSensors.Count} capteurs");
+}
 
     protected override async Task OnInitializedAsync()
     {
-         await ExecuteSearch();
+         
         await LoadAll();
+        await ExecuteSearch();
 
         CountStats = await SensorService.GetSensorCountByLocationAsync();
         LocationStats = await SensorService.GetAverageValueByLocationAsync();
@@ -273,6 +290,7 @@ else
         _isLoading = true;
         Sensors = await SensorService.GetSensorsAsync();
         _isLoading = false;
+        await ExecuteSearch();
     }
 
     private async Task DeleteSensor(int id)
@@ -299,10 +317,28 @@ else
         Counter.Increment();
     }
 
+
     private async Task OnChartClick(SeriesClickEventArgs args)
     {
         string clickedLocation = args.Category.ToString();
         SelectedLocationFilter = SelectedLocationFilter == clickedLocation ? null : clickedLocation;
         await ExecuteSearch();
     }
+private async Task OnCriticalOnlyChanged(ChangeEventArgs e)
+{
+    ShowCriticalOnly = (bool)e.Value!;
+    Console.WriteLine($"==> Checkbox changed: ShowCriticalOnly = {ShowCriticalOnly}");
+    await ExecuteSearch();
+    Console.WriteLine($"==> FilteredSensors count après search: {FilteredSensors.Count}");
+    StateHasChanged();
+}
+private bool _sortAscending = true;
+
+private void OnSortRequested()
+{
+    _sortAscending = !_sortAscending;
+    FilteredSensors = _sortAscending
+        ? FilteredSensors.OrderBy(s => s.Value).ToList()
+        : FilteredSensors.OrderByDescending(s => s.Value).ToList();
+}
 }

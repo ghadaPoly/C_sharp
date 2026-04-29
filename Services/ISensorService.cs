@@ -16,6 +16,5 @@ public interface ISensorService
     Task<List<LocationCountStat>> GetSensorCountByLocationAsync();
     Task DeleteSensorAsync(int id);
     Task<List<LocationStat>> GetAverageValueByLocationAsync();
-    
-    Task<List<SensorData>> SearchSensorsAsync(string? locationName, string? searchText);
+    Task<List<SensorData>> SearchSensorsAsync(string? locationFilter, string? searchText, bool criticalOnly = false);
     }
