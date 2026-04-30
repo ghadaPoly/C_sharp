@@ -81,6 +81,11 @@
 <button class="btn btn-primary mb-3 ms-2" @onclick="GoAddSensor">
     Ajouter un capteur
 </button>
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <a href="/edit-sensor" class="btn btn-success mb-3">+ New Sensor</a>
+    </Authorized>
+</AuthorizeView>
 
 <div class="row mb-4">
     <div class="col-md-8">
@@ -100,6 +105,10 @@
             </div>
         </div>
     </div>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+
+              
     <div class="col-md-4">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white">
@@ -120,6 +129,8 @@
             </div>
         </div>
     </div>
+          </Authorized>
+        </AuthorizeView>
 </div>
 
 <div class="row mb-3">
@@ -168,8 +179,11 @@ else
 }
 
 
-<a href="/edit-sensor" class="btn btn-success mb-3">+ Nouveau Capteur</a>
-
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <a href="/edit-sensor" class="btn btn-success mb-3">+ New Sensor</a>
+    </Authorized>
+</AuthorizeView>
 <hr>
 
 <h3>User Counter</h3>

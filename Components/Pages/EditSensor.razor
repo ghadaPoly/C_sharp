@@ -5,6 +5,7 @@
 @using DashboardData.Services
 @inject ISensorService SensorService
 @inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>@(Id.HasValue ? "Modifier le Capteur" : "Ajouter un Nouveau Capteur")</h3>
 

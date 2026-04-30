@@ -28,12 +28,22 @@
                     <td>@(sensor.Location != null ? sensor.Location.Name : "N/A")</td>
                     <td>@sensor.Value</td>
                     <td>
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+
                         <a href="/edit-sensor/@sensor.Id" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil"></i> Éditer
                         </a>
+                    </Authorized>
+                </AuthorizeView>
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
                         <button class="btn btn-sm btn-outline-danger" @onclick="() => TriggerDelete(sensor.Id)">
                              <i class="bi bi-trash"></i> Supprimer
                         </button>
+                    </Authorized>
+                </AuthorizeView>
+
                     </td>
                 </tr>
             }
@@ -60,3 +70,4 @@ public EventCallback OnSortRequested { get; set; }
         await OnDeleteClicked.InvokeAsync(id);
     }
 }
+
